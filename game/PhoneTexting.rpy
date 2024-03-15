@@ -1,5 +1,5 @@
 define nvl_mode = "phone"  ##Allow the NVL mode to become a phone conversation
-define MC_Name = "player_name" ##The name of the main character, used to place them on the screen
+define MC_Name = "Milk" ##The name of the main character, used to place them on the screen
 
 init -1 python:
     phone_position_x = 0.8  # Adjust as needed
