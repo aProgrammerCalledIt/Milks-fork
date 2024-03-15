@@ -1,21 +1,20 @@
-# Here's the code for the phone!
-
 define nvl_mode = "phone"  ##Allow the NVL mode to become a phone conversation
-define MC_Name = "Nighten" ##The name of the main character, used to place them on the screen
+define MC_Name = "player_name" ##The name of the main character, used to place them on the screen
 
 init -1 python:
-    phone_position_x = 0.3
-    phone_position_y = 0.5
+    phone_position_x = 0.8  # Adjust as needed
+    phone_position_y = 0.5  # Adjust as needed
 
     def Phone_ReceiveSound(event, interact=True, **kwargs):
         if event == "show_done":
             renpy.sound.play("audio/ReceiveText.ogg")
+            
     def Phone_SendSound(event, interact=True, **kwargs):
         if event == "show_done":
             renpy.sound.play("audio/SendText.ogg")
+            
     def print_bonjour():
         print("bonjour")
-
 
 transform phone_transform(pXalign=0.5, pYalign=0.5):
     xcenter pXalign
@@ -29,7 +28,6 @@ transform phone_appear(pXalign=0.5, pYalign=0.5): #Used only when the dialogue h
         yoffset 1080
         easein_back 1.0 yoffset 0
 
-    
 transform message_appear(pDirection):
     alpha 0.0
     xoffset 50 * pDirection
@@ -41,7 +39,6 @@ transform message_appear(pDirection):
 transform message_appear_icon():
     zoom 0.0
     easein_back 0.5 zoom 1.0
-    
 
 transform message_narrator:
     alpha 0.0
@@ -52,8 +49,11 @@ transform message_narrator:
     parallel:
         easein_back 0.5 yoffset 0
 
-screen PhoneDialogue(dialogue, items=None):
+init python:
+    # Define a variable to keep track of the number of messages
+    num_messages = 0
 
+screen PhoneDialogue(dialogue, items=None):
     style_prefix "phoneFrame"
     frame at phone_transform(phone_position_x, phone_position_y):
         if len(dialogue) == 1:
@@ -61,13 +61,19 @@ screen PhoneDialogue(dialogue, items=None):
         viewport:
             draggable True
             mousewheel True
-            # cols 1
-            yinitial 1.0
-            # scrollbars "vertical"
+            
             vbox:
+                
                 null height 20
                 use nvl_phonetext(dialogue)
-                null height 100
+                null height (100 + num_messages * 20)  # Adjust the height based on the number of messages
+
+        ## Modify home button action to navigate to home screen ##
+        imagebutton idle "gui/home_button.png" hover "gui/home_button.png":
+            action [ShowMenu("home_screen_content"), SetVariable('num_messages', num_messages + 1)]  # Increment the number of messages
+            style "home_button"
+            xalign 0.5  # Center the button horizontally
+            yalign 1.0  # Align the button to the bottom of the frame
 
 
 screen nvl_phonetext(dialogue):
@@ -90,8 +96,10 @@ screen nvl_phonetext(dialogue):
         else:
             if d.who == MC_Name:
                 $ message_frame = "phone_send_frame.png"
+                $ message_direction = 1
             else:
                 $ message_frame = "phone_received_frame.png"
+                $ message_direction = -1
 
             hbox:
                 spacing 10
@@ -125,14 +133,11 @@ screen nvl_phonetext(dialogue):
                         xsize 350
 
                         if d.current:
-                            if d.who == MC_Name:
-                                at message_appear(1)
-                            else:
-                                at message_appear(-1)
+                            at message_appear(message_direction)
 
                         text d.what:
                             pos (0,0)
-                            xsize 350
+                            xsize 250
                             slow_cps False
                             
 
@@ -154,7 +159,7 @@ style phoneFrame_frame:
     foreground Transform("phone_foreground.png", xcenter=0.5,yalign=0.5)
     
     ysize 815
-    xsize 495
+    xsize 400
 
 style phoneFrame_viewport:
     yfill True
@@ -167,3 +172,9 @@ style phoneFrame_vbox:
     xfill True
 
 
+screen home_screen_content:
+    style_prefix "phoneFrame"
+    frame at phone_transform(phone_position_x, phone_position_y):
+        imagebutton idle "gui/msg.png" xalign 1.0 yalign 1.0:
+            action [Hide("home_screen_content"), Show("PhoneDialogue", dialogue=[])]
+            
